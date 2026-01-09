@@ -43,6 +43,7 @@ Units and Time Step
 - Code units are chosen so Omega = 1 and one orbit is 2*pi in code time.
 - Length unit: dKpcUnit = 4.848e-9 so 1 code length ~ 1 AU.
 - Time step: dDelta = 2*pi/100 (100 steps per orbit).
+- dMsolUnit = 1.0, one code mass unit = 1 Msun
 
 Consistency Checks
 ------------------

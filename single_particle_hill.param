@@ -23,7 +23,7 @@ dEtaCourant     = 0.4
 nSteps          = 10
 iLogInterval    = 1
 iOutInterval    = 1    # output every timestep (.000001 ... .000010) for visualization
-iCheckInterval  = 100
+iCheckInterval  = 10
 
 # Input / output names.
 achInFile       = single_particle.std

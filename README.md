@@ -61,6 +61,88 @@ Notes
 - ChaNGa reads third_party/ChaNGa/single_particle.std as input.
 - Plot script prints both Quinn requested IC and ChaNGa first snapshot IC.
 
+1) README.md 
+
+README
+
+就是说明书：告诉你 Task2 的目标（Quinn(Python) vs ChaNGa 对 Hill’s equations 的对比）和运行流程。
+
+2) tools/make_single_particle_tipsy.py
+
+它负责生成 ChaNGa 要读的初始条件文件（Tipsy 格式）。
+
+输入：--x0 --y0 --vx0 --vy0（这些是 code units）
+
+输出：third_party/ChaNGa/single_particle.std
+
+还会加一个“guard particle”（质量10e−12
+）来避免 ChaNGa 的边界/奇异情况。
+
+3) single_particle.std
+
+就是第 2 步生成的 ChaNGa 初始条件二进制文件（你不用读懂内容，知道它是“IC 文件”就够）。
+
+4) single_particle_hill.param
+
+ChaNGa 的参数文件：控制
+
+读哪个 IC (achInFile)
+
+输出叫什么 (achOutName)
+
+多少步 (nSteps) / 步长 dt (dDelta)
+
+以及最重要的：patch/periodic 这些设置（会导致 y 坐标“折回/跳变”）
+
+5) plot_task2.py
+
+这是你的 Python 版 Quinn integrator（参考答案）。
+最关键函数：run_quinn_states_for_ic() 会给出每一步的 x,y,vx,vy。
+
+这里面有一堆你问的变量：
+
+vx, vy 就是最朴素的速度：dx/dt, dy/dt
+
+px = vx + y, py = vy - x（类似 canonical momentum 的组合）
+
+Px = vx - y, Py = vy + 2x（特别重要：Py=vy+2x 在“无外力 Hill 方程”里是守恒量）
+
+所以：如果初始是 (1,0,0,-2)，那么
+
+Py(0)= -2 + 2*1 = 0
+
+并且理论上 Py(t) 永远等于 0
+这就是你后来看到“蓝线一直是 0”为什么其实可能是对的（它在检验守恒量）。
+
+6) plot_time_series.py 
+
+plot_time_series
+
+它做的事是：
+
+读 ChaNGa 输出的 snapshots
+
+找到真正的物理粒子（按质量筛掉 guard）
+
+把 pos/vel 转回 code units
+
+再用 Python Quinn 算一条曲线叠上去
+
+画 4 张：x(t), y(t), vx(t), vy(t)
+
+教授很可能会问：y(t) 为啥有竖直尖峰？
+答案：因为 patch/periodic 条件下，ChaNGa 可能把 y “wrap”到一个区间里，过边界就会瞬间跳变。这不是物理突然跳，是坐标表示方式的问题。要么“unwrap y”，要么把 box 调大/振幅调小，让它不跨边界。
+
+7) compare_single_orbit.py
+
+画的是 x–y 平面轨道散点图（100 steps）：
+
+蓝：Python Quinn
+
+红：ChaNGa
+
+如果 ChaNGa 的红线变成一条斜线，很常见就是 y 被 wrap 了，导致点被“折回”。
+
 Result of epicycle:
 ChaNGa INPUT single_particle.std (raw units):
   mass = 1.000000e+00

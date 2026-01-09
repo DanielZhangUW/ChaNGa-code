@@ -38,6 +38,22 @@ Expected Outputs
 - task2/single_particle_timeseries.png
   4-panel plot comparing Quinn vs ChaNGa time series.
 
+  std output:
+
+python3 - <<'PY'
+import pynbody as pb
+s = pb.load("third_party/ChaNGa/single_particle.std")
+p = s[s["mass"]==s["mass"].max()][0]
+print("mass =", p["mass"])
+print("pos  =", p["pos"])
+print("vel  =", p["vel"])
+PY
+
+mass = [1.]
+pos  = [[1. 0. 0.]]
+vel  = [[ 0. -2.  0.]]
+
+
 Units and Time Step
 -------------------
 - Code units are chosen so Omega = 1 and one orbit is 2*pi in code time.

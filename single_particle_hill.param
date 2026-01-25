@@ -42,7 +42,7 @@ dOrbDist        = 1.0
 bPeriodic       = 1
 nReplicas       = 1
 dxPeriod        = 4.0
-dyPeriod        = 4.0
+dyPeriod        = 40.0
 dzPeriod        = 4.0
 
 # Unit system (see header comment).

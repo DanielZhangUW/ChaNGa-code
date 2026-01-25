@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("task2/single_particle_timeseries.png"),
+        default=Path("single_particle_timeseries.png"),
         help="Where to save the plot (default: %(default)s)",
     )
     parser.add_argument(

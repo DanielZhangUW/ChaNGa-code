@@ -74,6 +74,16 @@ def load_changa_series(pattern: str):
     vxs = []
     vys = []
 
+    # Add t=0 from the input std (code units).
+    std = pb.load("third_party/ChaNGa/single_particle.std", fmt="tipsy")
+    particle_std = select_physical_particle(std)
+    pos0 = np.asarray(particle_std["pos"], dtype=float)[0]
+    vel0 = np.asarray(particle_std["vel"], dtype=float)[0]
+    xs.append(pos0[0])
+    ys.append(pos0[1])
+    vxs.append(vel0[0])
+    vys.append(vel0[1])
+
     for fname in paths:
         snap = pb.load(fname)
         snap.physical_units()
@@ -91,7 +101,7 @@ def load_changa_series(pattern: str):
     vys = np.array(vys)
     nsteps = len(paths)
     dt = 2.0 * np.pi / nsteps
-    times = dt * (np.arange(nsteps) + 1)  # snapshots correspond to steps 1..N
+    times = dt * np.arange(len(xs))  # include t=0 input + snapshots 1..N
     first_state = {"pos": (xs[0], ys[0], 0.0), "vel": (vxs[0], vys[0], 0.0)}
     return times, xs, ys, vxs, vys, dt, first_state
 
@@ -106,6 +116,10 @@ def read_param_timing(param_path: Path):
                 line = line.strip()
                 if not line or line.startswith("#"):
                     continue
+                if "#" in line:
+                    line = line.split("#", 1)[0].strip()
+                    if not line:
+                        continue
                 if line.startswith("nSteps"):
                     nsteps = int(line.split("=")[1].strip())
                 elif line.startswith("dDelta"):
@@ -118,12 +132,12 @@ def read_param_timing(param_path: Path):
 def hill_time_series(x0, y0, vx0, vy0, nsteps, dt):
     ic = {"x": x0, "y": y0, "z": 0.0, "vx": vx0, "vy": vy0, "vz": 0.0}
     x, y, vx, vy = run_quinn_states_for_ic(ic, dt=dt, nsteps=nsteps)
-    # run_quinn_states_for_ic returns nsteps+1 samples; drop the initial state
+    # run_quinn_states_for_ic returns nsteps+1 samples including t=0
     return (
-        np.array(x[1 : nsteps + 1]),
-        np.array(y[1 : nsteps + 1]),
-        np.array(vx[1 : nsteps + 1]),
-        np.array(vy[1 : nsteps + 1]),
+        np.array(x),
+        np.array(y),
+        np.array(vx),
+        np.array(vy),
     )
 
 
@@ -164,9 +178,9 @@ def main():
     param_nsteps, param_dt = read_param_timing(param_path)
     if param_dt is not None:
         dt = param_dt
-        times = dt * (np.arange(len(times)) + 1)
+        times = dt * np.arange(len(times))
     if param_nsteps is not None:
-        nsteps = min(len(times), param_nsteps)
+        nsteps = min(len(times), param_nsteps + 1)
     else:
         nsteps = len(times)
     print(f"Using nsteps={nsteps}, dt={dt:.6f} (code units) for Quinn overlay")
@@ -175,7 +189,7 @@ def main():
         f"x={args.x0:.6e}, y={args.y0:.6e}, vx={args.vx0:.6e}, vy={args.vy0:.6e}"
     )
     print(
-        "ChaNGa first snapshot (code units): "
+        "ChaNGa t=0 input (code units): "
         f"x={first_state['pos'][0]:.6e}, y={first_state['pos'][1]:.6e}, "
         f"vx={first_state['vel'][0]:.6e}, vy={first_state['vel'][1]:.6e}"
     )
@@ -197,10 +211,10 @@ def main():
             file=sys.stderr,
         )
         print("  Did you forget to regenerate Tipsy and rerun ChaNGa?", file=sys.stderr)
-    qx, qy, qvx, qvy = hill_time_series(args.x0, args.y0, args.vx0, args.vy0, nsteps, dt)
+    qx, qy, qvx, qvy = hill_time_series(args.x0, args.y0, args.vx0, args.vy0, nsteps - 1, dt)
     changa_series = (xs[:nsteps], ys[:nsteps], vxs[:nsteps], vys[:nsteps])
     times = times[:nsteps]
-    quinn_series = (qx, qy, qvx, qvy)
+    quinn_series = (qx[:nsteps], qy[:nsteps], qvx[:nsteps], qvy[:nsteps])
     plot_time_series(times, changa_series, quinn_series, args.output, not args.no_show)
 
 
